@@ -1,24 +1,32 @@
-import React from 'react'
-import { Toaster } from 'react-hot-toast'
-import { Route, Routes } from 'react-router-dom'
-import Dashboard from './pages/dashboard/Dashboard'
-import Emergencies from './pages/emergency/Emergencies'
-import Layout from './pages/Layout'
+import React from "react";
+import { Provider } from "react-redux";
+import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { Route, Routes } from "react-router-dom";
+import { store } from "@/store";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Emergencies from "./pages/emergency/Emergencies";
+import Layout from "./pages/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
-    <>
-      <Toaster />
-      <Routes>
-        <Route path='/*' element ={<Layout />}>
-          <Route index element ={<Dashboard />} />
-          <Route path='emergencies' element = {<Emergencies />} />
-          <Route path='emergency/:emergency_id' element = {<Emergencies />} />
-        </Route>
+    <Provider store={store}>
+      <BrowserRouter>
+        <Toaster position="top-right" />
+        <ProtectedRoute>
+          <Routes>
+            <Route path="/*" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="emergencies" element={<Emergencies />} />
+              <Route path="emergency/:emergency_id" element={<Emergencies />} />
+            </Route>
+          </Routes>
+        </ProtectedRoute>
+      </BrowserRouter>
+    </Provider>
+  );
+};
 
-      </Routes>
-    </>
-  )
-}
-
-export default App
+export default App;

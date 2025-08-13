@@ -1,3 +1,4 @@
+import { useSelector } from "react-redux";
 import {
   IconAmbulance,
   IconCamera,
@@ -30,11 +31,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  user: {
-    name: "Admin 2",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -147,6 +143,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }) {
+  const { user } = useSelector((state) => state.auth);
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -158,7 +156,9 @@ export function AppSidebar({ ...props }) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Swift Aid.</span>
+                <span className="text-base font-semibold">
+                  {user?.agency?.name?.split(" ")[0] || "Swift"} Aid
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -170,7 +170,7 @@ export function AppSidebar({ ...props }) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );
