@@ -37,13 +37,20 @@ export function NavMain({ items }) {
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <NavLink to={item.url} end>
-                {({isActive})=> (
-                  <SidebarMenuButton isActive ={isActive}   tooltip={item.title}>
+                {({ isActive }) => (
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    tooltip={item.title}
+                    className={`${
+                      isActive
+                        ? "border-l-4 border-red-500 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                        : ""
+                    }`}
+                  >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </SidebarMenuButton>
-
-                ) }
+                )}
               </NavLink>
             </SidebarMenuItem>
           ))}

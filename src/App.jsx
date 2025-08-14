@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import { store } from "@/store";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Emergencies from "./pages/emergency/Emergencies";
+import Analytics from "./pages/analytics/Analytics";
 import Layout from "./pages/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -21,6 +22,7 @@ const App = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="emergencies" element={<Emergencies />} />
               <Route path="emergency/:emergency_id" element={<Emergencies />} />
+              <Route path="analytics" element={<Analytics />} />
             </Route>
           </Routes>
         </ProtectedRoute>
