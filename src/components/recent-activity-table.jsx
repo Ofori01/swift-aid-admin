@@ -47,6 +47,7 @@ export function RecentActivityTable({ data }) {
     location: true,
     time: true,
     priority: true,
+    emergencyStatus: true,
   });
 
   const responderColumns = [
@@ -76,6 +77,11 @@ export function RecentActivityTable({ data }) {
     {
       key: "priority",
       label: "AI Priority",
+      icon: <Activity className="h-4 w-4" />,
+    },
+    {
+      key: "emergencyStatus",
+      label: "Status",
       icon: <Activity className="h-4 w-4" />,
     },
   ];
@@ -349,22 +355,24 @@ export function RecentActivityTable({ data }) {
                         )}
                         {visibleColumns.priority && (
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                className={`${getPriorityColor(
-                                  item.priority
-                                )} text-xs`}
-                              >
-                                {item.priority}/100
-                              </Badge>
-                              <Badge
-                                className={`${getStatusColor(
-                                  item.status
-                                )} text-xs`}
-                              >
-                                {item.status}
-                              </Badge>
-                            </div>
+                            <Badge
+                              className={`${getPriorityColor(
+                                item.priority
+                              )} text-xs`}
+                            >
+                              {item.priority}/100
+                            </Badge>
+                          </TableCell>
+                        )}
+                        {visibleColumns.emergencyStatus && (
+                          <TableCell>
+                            <Badge
+                              className={`${getStatusColor(
+                                item.status
+                              )} text-xs`}
+                            >
+                              {item.status}
+                            </Badge>
                           </TableCell>
                         )}
                       </>
