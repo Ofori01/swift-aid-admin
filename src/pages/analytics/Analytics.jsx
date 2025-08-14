@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { ChartResponseTime } from "@/components/chart-response-time";
 import {
   AlertTriangle,
   TrendingUp,
@@ -48,7 +49,6 @@ const Analytics = () => {
     responseTimesData: responseTimesDataRaw,
     responderUtilizationData: responderUtilizationDataRaw,
     loading,
-    responseTimesLoading,
     responderUtilizationLoading,
     error,
     responseTimesError,
@@ -526,87 +526,13 @@ const Analytics = () => {
         )}
       </div>
 
-      {/* Response Times Chart */}
-      {responseTimesData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Response Times Trend</CardTitle>
-            <CardDescription>
-              Average response times over the selected period
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {responseTimesLoading ? (
-              <Skeleton className="h-64 w-full" />
-            ) : (
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="text-center p-4 rounded-lg border">
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatTime(responseTimesData?.fastest)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Fastest Response
-                    </p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg border">
-                    <p className="text-2xl font-bold">
-                      {formatTime(responseTimesData?.average)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Average Response
-                    </p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg border">
-                    <p className="text-2xl font-bold text-red-600">
-                      {formatTime(responseTimesData?.slowest)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Slowest Response
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h4 className="font-medium mb-3">Daily Breakdown</h4>
-                  <div className="space-y-2">
-                    {(responseTimesData?.daily || []).map((day, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="text-sm">
-                          {day?.date || "Unknown"}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-32 h-2 bg-gray-200 rounded">
-                            <div
-                              className="h-2 bg-blue-500 rounded"
-                              style={{
-                                width: `${Math.min(
-                                  ((day?.averageTime || 0) /
-                                    (responseTimesData?.slowest || 1)) *
-                                    100,
-                                  100
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium w-12 text-right">
-                            {formatTime(day?.averageTime)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Emergency Trends Chart */}
+      <ChartResponseTime
+        data={responseTimesData}
+        error={responseTimesError}
+        title="Emergency Trends (Last 30 Days)"
+        description="Daily emergency requests and peak hours showing when emergencies tend to happen"
+      />
 
       {/* Responder Utilization */}
       {responderUtilizationData && (
