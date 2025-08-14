@@ -31,77 +31,54 @@ export const description = "An interactive area chart showing emergency trends";
 const chartConfig = {
   emergencies: {
     label: "Emergencies",
-  },
-  medical: {
-    label: "Medical",
-    color: "var(--primary)",
+    color: "hsl(0, 84%, 60%)", // Red color
   },
   fire: {
     label: "Fire",
-    color: "hsl(var(--destructive))",
+    color: "hsl(0, 84%, 60%)", // Red color to match app theme
   },
-  police: {
-    label: "Police",
-    color: "hsl(var(--warning))",
-  },
-};
-
-// Helper function to generate today's hourly data
-const generateTodayData = (todayTrends) => {
-  const hours = [];
-  for (let i = 0; i < 24; i++) {
-    const hour = i.toString().padStart(2, "0") + ":00";
-    hours.push({
-      date: hour,
-      medical: todayTrends?.medical?.[i] || Math.floor(Math.random() * 10),
-      fire: todayTrends?.fire?.[i] || Math.floor(Math.random() * 5),
-      police: todayTrends?.police?.[i] || Math.floor(Math.random() * 8),
-    });
-  }
-  return hours;
 };
 
 // Helper function to process trends data based on period
-const processChartData = (trends, period) => {
-  if (!trends) return [];
+const processChartData = (emergencies, period) => {
+  if (!emergencies || !emergencies.trends) return [];
+
+  const { trends } = emergencies;
 
   switch (period) {
     case "today":
-      return generateTodayData(trends.today);
+      return (
+        trends.today?.hourly_data?.map((item) => ({
+          date: item.time,
+          fire: item.count,
+          emergencies: item.count,
+        })) || []
+      );
 
     case "7d":
       return (
-        trends.last_7_days?.map((item, index) => ({
-          date: new Date(Date.now() - (6 - index) * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
-          medical: item.medical || 0,
-          fire: item.fire || 0,
-          police: item.police || 0,
+        trends.last_7_days?.map((item) => ({
+          date: item.month, // "Aug 11"
+          fire: item.count,
+          emergencies: item.count,
         })) || []
       );
 
     case "30d":
       return (
-        trends.last_30_days?.map((item, index) => ({
-          date: new Date(Date.now() - (29 - index) * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
-          medical: item.medical || 0,
-          fire: item.fire || 0,
-          police: item.police || 0,
+        trends.last_30_days?.map((item) => ({
+          date: item.month, // "Aug 11"
+          fire: item.count,
+          emergencies: item.count,
         })) || []
       );
 
     case "3m":
       return (
-        trends.last_3_months?.map((item, index) => ({
-          date: new Date(Date.now() - (89 - index) * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
-          medical: item.medical || 0,
-          fire: item.fire || 0,
-          police: item.police || 0,
+        trends.last_3_months?.map((item) => ({
+          date: item.month, // "Aug 11"
+          fire: item.count,
+          emergencies: item.count,
         })) || []
       );
 
@@ -121,16 +98,12 @@ export function ChartAreaInteractive({ data }) {
   }, [isMobile]);
 
   const chartData = React.useMemo(() => {
-    return processChartData(data?.trends, timeRange);
-  }, [data?.trends, timeRange]);
+    return processChartData(data?.emergencies, timeRange);
+  }, [data?.emergencies, timeRange]);
 
   const totalEmergencies = React.useMemo(() => {
     if (!chartData.length) return 0;
-    return chartData.reduce(
-      (sum, item) =>
-        sum + (item.medical || 0) + (item.fire || 0) + (item.police || 0),
-      0
-    );
+    return chartData.reduce((sum, item) => sum + (item.fire || 0), 0);
   }, [chartData]);
 
   return (
@@ -191,18 +164,6 @@ export function ChartAreaInteractive({ data }) {
           >
             <AreaChart data={chartData}>
               <defs>
-                <linearGradient id="fillMedical" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-medical)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-medical)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
                 <linearGradient id="fillFire" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
@@ -212,18 +173,6 @@ export function ChartAreaInteractive({ data }) {
                   <stop
                     offset="95%"
                     stopColor="var(--color-fire)"
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-                <linearGradient id="fillPolice" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-police)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-police)"
                     stopOpacity={0.1}
                   />
                 </linearGradient>
@@ -237,13 +186,9 @@ export function ChartAreaInteractive({ data }) {
                 minTickGap={32}
                 tickFormatter={(value) => {
                   if (timeRange === "today") {
-                    return value; // Show hour format (e.g., "14:00")
+                    return value; // Show hour format (e.g., "1 AM")
                   }
-                  const date = new Date(value);
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  });
+                  return value; // Show formatted date (e.g., "Aug 11")
                 }}
               />
               <ChartTooltip
@@ -254,36 +199,18 @@ export function ChartAreaInteractive({ data }) {
                       if (timeRange === "today") {
                         return `Time: ${value}`;
                       }
-                      return new Date(value).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      });
+                      return `Date: ${value}`;
                     }}
                     indicator="dot"
                   />
                 }
               />
               <Area
-                dataKey="police"
-                type="natural"
-                fill="url(#fillPolice)"
-                stroke="var(--color-police)"
-                stackId="a"
-              />
-              <Area
                 dataKey="fire"
                 type="natural"
                 fill="url(#fillFire)"
                 stroke="var(--color-fire)"
-                stackId="a"
-              />
-              <Area
-                dataKey="medical"
-                type="natural"
-                fill="url(#fillMedical)"
-                stroke="var(--color-medical)"
-                stackId="a"
+                strokeWidth={2}
               />
             </AreaChart>
           </ChartContainer>

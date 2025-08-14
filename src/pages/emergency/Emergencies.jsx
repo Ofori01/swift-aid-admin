@@ -2,9 +2,7 @@ import React from 'react'
 
 const Emergencies = () => {
   return (
-    <div>
-      
-    </div>
+    <div>Emergencies</div>
   )
 }
 
