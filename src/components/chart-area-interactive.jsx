@@ -34,7 +34,7 @@ const chartConfig = {
     color: "hsl(0, 84%, 60%)", // Red color
   },
   fire: {
-    label: "Fire",
+    label: "Emergencies",
     color: "hsl(0, 84%, 60%)", // Red color to match app theme
   },
 };
