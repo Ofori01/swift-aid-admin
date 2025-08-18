@@ -38,6 +38,7 @@ const OngoingEmergencies = () => {
   const [selectedEmergency, setSelectedEmergency] = useState(null);
   const [trackedEmergency, setTrackedEmergency] = useState(null);
   const [popupInfo, setPopupInfo] = useState(null);
+  const [responderPopup, setResponderPopup] = useState(null);
   const [viewState, setViewState] = useState({
     longitude: -0.1838044,
     latitude: 5.6486909,
@@ -82,17 +83,16 @@ const OngoingEmergencies = () => {
     }
   };
 
-  const getResponderIcon = (responderType) => {
-    switch (responderType) {
-      case "ambulance":
-        return <IconAmbulance className="w-3 h-3 text-white" />;
-      case "fire_truck":
-        return <IconTruck className="w-3 h-3 text-white" />;
-      case "police":
-        return <IconShieldCheck className="w-3 h-3 text-white" />;
-      default:
-        return <IconMapPin className="w-3 h-3 text-white" />;
-    }
+  const getResponderIcon = () => {
+    // Since the API doesn't provide vehicle_type, we'll use a generic responder icon
+    // You can enhance this later when the API provides more specific responder types
+    return <IconMapPin className="w-3 h-3 text-white" />;
+  };
+
+  const getResponderMarkerColor = () => {
+    // You can customize this based on responder type or status
+    // For now, using blue for all responders
+    return "bg-blue-600";
   };
 
   // Helper function for future responder markers (currently unused but ready for expansion)
@@ -292,10 +292,16 @@ const OngoingEmergencies = () => {
                           5.6486909
                         }
                         anchor="bottom"
+                        onClick={(e) => {
+                          e.originalEvent.stopPropagation();
+                          setResponderPopup(responder);
+                        }}
                       >
-                        <div className="relative">
-                          <div className="bg-blue-600 p-2 rounded-full shadow-lg border-2 border-white">
-                            {getResponderIcon(responder.vehicle_type)}
+                        <div className="relative cursor-pointer">
+                          <div
+                            className={`${getResponderMarkerColor()} p-2 rounded-full shadow-lg border-2 border-white hover:scale-110 transition-transform`}
+                          >
+                            {getResponderIcon()}
                           </div>
                           <div className="absolute -top-1 -right-1">
                             <div className="w-3 h-3 bg-green-500 rounded-full border border-white"></div>
@@ -350,6 +356,53 @@ const OngoingEmergencies = () => {
                           >
                             View Details
                           </Button>
+                        </div>
+                      </Popup>
+                    )}
+
+                    {/* Popup for Responder */}
+                    {responderPopup && (
+                      <Popup
+                        anchor="top"
+                        longitude={
+                          responderPopup.current_location?.coordinates[0] ||
+                          -0.1838044
+                        }
+                        latitude={
+                          responderPopup.current_location?.coordinates[1] ||
+                          5.6486909
+                        }
+                        onClose={() => setResponderPopup(null)}
+                        className="max-w-xs"
+                      >
+                        <div className="p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="bg-blue-600 p-1.5 rounded-full">
+                              {getResponderIcon()}
+                            </div>
+                            <span className="font-semibold">
+                              {responderPopup.name}
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <p>
+                              <span className="font-medium">Badge:</span>{" "}
+                              {responderPopup.badgeNumber}
+                            </p>
+                            <p>
+                              <span className="font-medium">Phone:</span>{" "}
+                              {responderPopup.phone}
+                            </p>
+                            <p>
+                              <span className="font-medium">Status:</span>{" "}
+                              <Badge
+                                variant="outline"
+                                className="text-green-600 border-green-600 ml-1"
+                              >
+                                {responderPopup.status}
+                              </Badge>
+                            </p>
+                          </div>
                         </div>
                       </Popup>
                     )}
