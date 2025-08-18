@@ -11,6 +11,9 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["react-map-gl", "mapbox-gl"],
+  },
   server: {
     proxy: {
       "/api": {

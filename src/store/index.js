@@ -3,6 +3,7 @@ import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboardSlice";
 import emergenciesReducer from "./slices/emergenciesSlice";
 import analyticsReducer from "./slices/analyticsSlice";
+import ongoingEmergenciesReducer from "./slices/ongoingEmergenciesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     emergencies: emergenciesReducer,
     analytics: analyticsReducer,
+    ongoingEmergencies: ongoingEmergenciesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

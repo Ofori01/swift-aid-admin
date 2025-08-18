@@ -7,6 +7,7 @@ import { store } from "@/store";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Emergencies from "./pages/emergency/Emergencies";
 import Analytics from "./pages/analytics/Analytics";
+import OngoingEmergencies from "./pages/ongoing-emergencies/OngoingEmergencies";
 import Layout from "./pages/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -23,6 +24,10 @@ const App = () => {
               <Route path="emergencies" element={<Emergencies />} />
               <Route path="emergency/:emergency_id" element={<Emergencies />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route
+                path="ongoing-emergencies"
+                element={<OngoingEmergencies />}
+              />
             </Route>
           </Routes>
         </ProtectedRoute>
