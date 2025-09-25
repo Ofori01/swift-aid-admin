@@ -52,6 +52,7 @@ import {
   Timer,
   Target,
   Activity,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -121,6 +122,10 @@ const Emergencies = () => {
     setTypeFilter("all");
     dispatch(clearFilters());
     toast.info("Filters cleared");
+  };
+
+  const getImageUrl = (imageId) => {
+    return `https://swift-aid-backend.onrender.com/emergency/image/${imageId}`;
   };
 
   const openDetailsModal = (emergency) => {
@@ -687,7 +692,7 @@ const Emergencies = () => {
 
       {/* Emergency Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           {selectedEmergency && (
             <>
               <DialogHeader className="space-y-4 pb-6 border-b">
@@ -747,6 +752,34 @@ const Emergencies = () => {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Emergency Image - Full Width */}
+                {selectedEmergency.image && (
+                  <Card className="border-0 shadow-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5" />
+                        Emergency Image
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="aspect-video w-full relative overflow-hidden rounded-lg bg-gray-50">
+                        <img
+                          src={getImageUrl(selectedEmergency.image)}
+                          alt="Emergency scene"
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                          onError={(e) => {
+                            e.target.src =
+                              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='225' viewBox='0 0 400 225'%3E%3Crect width='400' height='225' fill='%23f3f4f6'/%3E%3Ctext x='200' y='112' font-family='Arial' font-size='16' fill='%236b7280' text-anchor='middle' dy='.3em'%3EImage not available%3C/text%3E%3C/svg%3E";
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-3 text-center">
+                        Emergency scene documentation
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Emergency Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

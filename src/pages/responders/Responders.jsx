@@ -187,12 +187,27 @@ const Responders = () => {
   return (
     <div className="space-y-6 h-screen flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <IconUsers className="h-6 w-6 text-red-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Responders</h1>
-        <Badge variant="outline" className="ml-2">
-          {responders.length} Total
-        </Badge>
+      <div className="flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <IconUsers className="h-6 w-6 text-red-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Responders</h1>
+          <Badge variant="outline" className="ml-2">
+            {responders.length} Total
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => dispatch(fetchResponders())}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+          >
+            <IconRefresh
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Resizable Layout */}

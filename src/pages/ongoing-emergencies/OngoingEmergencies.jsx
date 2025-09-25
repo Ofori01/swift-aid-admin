@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Map, { Marker, Popup } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -44,6 +44,7 @@ const OngoingEmergencies = () => {
     latitude: 5.6486909,
     zoom: 12,
   });
+  const mapRef = useRef(null);
 
   useEffect(() => {
     dispatch(fetchOngoingEmergencies());
@@ -72,6 +73,42 @@ const OngoingEmergencies = () => {
     return () => clearInterval(interval);
   }, [dispatch]);
 
+  // Handle map resize when container changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (mapRef.current) {
+        setTimeout(() => {
+          mapRef.current.getMap().resize();
+        }, 100);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    const mapContainer = document.querySelector(
+      '[data-testid="map-container"]'
+    );
+    if (mapContainer) {
+      resizeObserver.observe(mapContainer);
+    }
+
+    // Also listen to window resize events
+    window.addEventListener("resize", handleResize);
+
+    // Listen for sidebar toggle events (custom event)
+    const handleSidebarToggle = () => {
+      setTimeout(handleResize, 300); // Delay to account for transition
+    };
+
+    window.addEventListener("sidebar-toggle", handleSidebarToggle);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("sidebar-toggle", handleSidebarToggle);
+    };
+  }, []);
+
   const getEmergencyIcon = (type) => {
     switch (type?.toLowerCase()) {
       case "fire":
@@ -83,20 +120,71 @@ const OngoingEmergencies = () => {
     }
   };
 
-  const getResponderIcon = () => {
-    // Since the API doesn't provide vehicle_type, we'll use a generic responder icon
-    // You can enhance this later when the API provides more specific responder types
-    return <IconMapPin className="w-3 h-3 text-white" />;
+  const getResponderIcon = (responderType = "default") => {
+    switch (responderType?.toLowerCase()) {
+      case "ambulance":
+        return <IconAmbulance className="w-3 h-3 text-white" />;
+      case "fire_truck":
+        return <IconTruck className="w-3 h-3 text-white" />;
+      case "police_unit":
+        return <IconShieldCheck className="w-3 h-3 text-white" />;
+      default:
+        return <IconMapPin className="w-3 h-3 text-white" />;
+    }
   };
 
-  const getResponderMarkerColor = () => {
-    // You can customize this based on responder type or status
-    // For now, using blue for all responders
-    return "bg-blue-600";
+  const getResponderMarkerColor = (responderType = "default") => {
+    switch (responderType?.toLowerCase()) {
+      case "ambulance":
+        return "bg-blue-600";
+      case "fire_truck":
+        return "bg-red-600";
+      case "police_unit":
+        return "bg-green-600";
+      default:
+        return "bg-gray-600";
+    }
   };
 
-  // Helper function for future responder markers (currently unused but ready for expansion)
-  const _getResponderIcon = getResponderIcon;
+  // Get all responders with their types and travel times from selected_responders
+  const getAllResponders = (emergency) => {
+    const agencyResponders = emergency.agency_responders || [];
+    const selectedResponders = emergency.selected_responders || {};
+
+    // Enhance agency responders with type and travel time from selected_responders
+    return agencyResponders.map((responder) => {
+      let responderType = null;
+      let travelTime = null;
+      let routeType = null;
+
+      // Find this responder in the selected_responders to get type and travel time
+      Object.entries(selectedResponders).forEach(([type, responderList]) => {
+        if (Array.isArray(responderList)) {
+          const selectedResponder = responderList.find(
+            (sr) => sr.responder_id === responder._id
+          );
+          if (selectedResponder) {
+            responderType = type;
+            travelTime = selectedResponder.travelTime;
+            routeType = selectedResponder.routeType;
+          }
+        }
+      });
+
+      return {
+        ...responder,
+        responder_type: responderType,
+        travel_time: travelTime,
+        route_type: routeType,
+      };
+    });
+  };
+
+  // Get total assigned responders count
+  const getAssignedRespondersCount = (emergency) => {
+    // agency_responders contains all the responders assigned to this emergency
+    return emergency.agency_responders?.length || 0;
+  };
 
   const getSeverityColor = (severity) => {
     switch (severity?.toLowerCase()) {
@@ -180,9 +268,9 @@ const OngoingEmergencies = () => {
   const summary = data?.summary || {};
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 h-full flex flex-col min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold">Ongoing Emergencies</h1>
           <p className="text-muted-foreground">
@@ -211,10 +299,10 @@ const OngoingEmergencies = () => {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
           {/* Map */}
-          <div className="lg:col-span-2">
-            <Card className="overflow-hidden">
+          <div className="lg:col-span-2 min-w-0 flex flex-col">
+            <Card className="overflow-hidden flex-1 flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <IconMapPin className="w-5 h-5 text-red-600" />
@@ -229,21 +317,33 @@ const OngoingEmergencies = () => {
                   {trackedEmergency ? (
                     <>
                       Showing emergency location and{" "}
-                      {trackedEmergency.agency_responders?.length || 0}{" "}
-                      responder locations
+                      {getAllResponders(trackedEmergency).length} responder
+                      locations ({getAssignedRespondersCount(trackedEmergency)}{" "}
+                      assigned)
                     </>
                   ) : (
                     "Real-time map showing emergency locations and responder positions"
                   )}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-[600px] relative">
+              <CardContent className="p-0 flex-1 flex flex-col">
+                <div
+                  className="flex-1 w-full relative overflow-hidden min-h-[500px]"
+                  data-testid="map-container"
+                >
                   <Map
+                    ref={mapRef}
                     {...viewState}
                     onMove={(evt) => setViewState(evt.viewState)}
                     mapboxAccessToken={MAPBOX_TOKEN}
-                    style={{ width: "100%", height: "100%" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minWidth: "100%",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                    }}
                     mapStyle="mapbox://styles/mapbox/streets-v12"
                   >
                     {/* Emergency Location Marker - Only for tracked emergency */}
@@ -280,35 +380,46 @@ const OngoingEmergencies = () => {
                     )}
 
                     {/* Responder Markers - Only for tracked emergency */}
-                    {trackedEmergency?.agency_responders?.map((responder) => (
-                      <Marker
-                        key={`responder-${responder._id}`}
-                        longitude={
-                          responder.current_location?.coordinates[0] ||
-                          -0.1838044
-                        }
-                        latitude={
-                          responder.current_location?.coordinates[1] ||
-                          5.6486909
-                        }
-                        anchor="bottom"
-                        onClick={(e) => {
-                          e.originalEvent.stopPropagation();
-                          setResponderPopup(responder);
-                        }}
-                      >
-                        <div className="relative cursor-pointer">
-                          <div
-                            className={`${getResponderMarkerColor()} p-2 rounded-full shadow-lg border-2 border-white hover:scale-110 transition-transform`}
-                          >
-                            {getResponderIcon()}
+                    {trackedEmergency &&
+                      getAllResponders(trackedEmergency).map((responder) => (
+                        <Marker
+                          key={`responder-${responder._id}`}
+                          longitude={
+                            responder.current_location?.coordinates[0] ||
+                            -0.1838044
+                          }
+                          latitude={
+                            responder.current_location?.coordinates[1] ||
+                            5.6486909
+                          }
+                          anchor="bottom"
+                          onClick={(e) => {
+                            e.originalEvent.stopPropagation();
+                            setResponderPopup(responder);
+                          }}
+                        >
+                          <div className="relative cursor-pointer">
+                            <div
+                              className={`${getResponderMarkerColor(
+                                responder.responder_type
+                              )} p-2 rounded-full shadow-lg border-2 border-white hover:scale-110 transition-transform`}
+                            >
+                              {getResponderIcon(responder.responder_type)}
+                            </div>
+                            <div className="absolute -top-1 -right-1">
+                              <div
+                                className={`w-3 h-3 rounded-full border border-white ${
+                                  responder.status === "available"
+                                    ? "bg-green-500"
+                                    : responder.status === "busy"
+                                    ? "bg-red-500"
+                                    : "bg-yellow-500"
+                                }`}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="absolute -top-1 -right-1">
-                            <div className="w-3 h-3 bg-green-500 rounded-full border border-white"></div>
-                          </div>
-                        </div>
-                      </Marker>
-                    ))}
+                        </Marker>
+                      ))}
 
                     {/* Popup for Emergency Location */}
                     {popupInfo && (
@@ -377,14 +488,29 @@ const OngoingEmergencies = () => {
                       >
                         <div className="p-3">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="bg-blue-600 p-1.5 rounded-full">
-                              {getResponderIcon()}
+                            <div
+                              className={`${getResponderMarkerColor(
+                                responderPopup.responder_type
+                              )} p-1.5 rounded-full`}
+                            >
+                              {getResponderIcon(responderPopup.responder_type)}
                             </div>
                             <span className="font-semibold">
                               {responderPopup.name}
                             </span>
                           </div>
                           <div className="space-y-1 text-sm">
+                            {responderPopup.responder_type && (
+                              <p>
+                                <span className="font-medium">Type:</span>{" "}
+                                <Badge variant="outline" className="ml-1">
+                                  {responderPopup.responder_type.replace(
+                                    "_",
+                                    " "
+                                  )}
+                                </Badge>
+                              </p>
+                            )}
                             <p>
                               <span className="font-medium">Badge:</span>{" "}
                               {responderPopup.badgeNumber}
@@ -393,11 +519,24 @@ const OngoingEmergencies = () => {
                               <span className="font-medium">Phone:</span>{" "}
                               {responderPopup.phone}
                             </p>
+                            {responderPopup.travel_time && (
+                              <p>
+                                <span className="font-medium">ETA:</span>{" "}
+                                {Math.round(responderPopup.travel_time / 60)}{" "}
+                                min
+                              </p>
+                            )}
                             <p>
                               <span className="font-medium">Status:</span>{" "}
                               <Badge
                                 variant="outline"
-                                className="text-green-600 border-green-600 ml-1"
+                                className={`ml-1 ${
+                                  responderPopup.status === "available"
+                                    ? "text-green-600 border-green-600"
+                                    : responderPopup.status === "busy"
+                                    ? "text-red-600 border-red-600"
+                                    : "text-yellow-600 border-yellow-600"
+                                }`}
                               >
                                 {responderPopup.status}
                               </Badge>
@@ -471,8 +610,7 @@ const OngoingEmergencies = () => {
                           {formatTime(emergency.createdAt)}
                         </span>
                         <span>
-                          {emergency.response_metrics
-                            ?.total_responders_selected || 0}{" "}
+                          {getAssignedRespondersCount(emergency)} assigned
                           responders
                         </span>
                       </div>
@@ -548,24 +686,57 @@ const OngoingEmergencies = () => {
                 </TabsList>
 
                 <TabsContent value="responders" className="space-y-4">
-                  {selectedEmergency.agency_responders?.length > 0 ? (
+                  {getAllResponders(selectedEmergency).length > 0 ? (
                     <div className="space-y-3">
-                      {selectedEmergency.agency_responders.map((responder) => (
+                      {getAllResponders(selectedEmergency).map((responder) => (
                         <Card key={responder._id}>
                           <CardContent className="p-3">
                             <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">{responder.name}</p>
-                                <p className="text-sm text-gray-600">
-                                  Badge: {responder.badgeNumber}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Phone: {responder.phone}
-                                </p>
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`${getResponderMarkerColor(
+                                    responder.responder_type
+                                  )} p-2 rounded-full`}
+                                >
+                                  {getResponderIcon(responder.responder_type)}
+                                </div>
+                                <div>
+                                  <p className="font-medium">
+                                    {responder.name}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Badge: {responder.badgeNumber}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Phone: {responder.phone}
+                                  </p>
+                                  {responder.responder_type && (
+                                    <p className="text-sm text-gray-600">
+                                      Type:{" "}
+                                      {responder.responder_type.replace(
+                                        "_",
+                                        " "
+                                      )}
+                                    </p>
+                                  )}
+                                  {responder.travel_time && (
+                                    <p className="text-sm text-gray-600">
+                                      ETA:{" "}
+                                      {Math.round(responder.travel_time / 60)}{" "}
+                                      min
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               <Badge
                                 variant="outline"
-                                className="text-green-600 border-green-600"
+                                className={`${
+                                  responder.status === "available"
+                                    ? "text-green-600 border-green-600"
+                                    : responder.status === "busy"
+                                    ? "text-red-600 border-red-600"
+                                    : "text-yellow-600 border-yellow-600"
+                                }`}
                               >
                                 {responder.status}
                               </Badge>
@@ -587,13 +758,10 @@ const OngoingEmergencies = () => {
                       <Card>
                         <CardContent className="p-3 text-center">
                           <p className="text-2xl font-bold text-red-600">
-                            {
-                              selectedEmergency.response_metrics
-                                .total_responders_selected
-                            }
+                            {getAssignedRespondersCount(selectedEmergency)}
                           </p>
                           <p className="text-sm text-gray-600">
-                            Total Responders
+                            Assigned Responders
                           </p>
                         </CardContent>
                       </Card>

@@ -1,6 +1,13 @@
-"use client"
+"use client";
 
-import { IconDots, IconFolder, IconShare3, IconTrash } from "@tabler/icons-react";
+import { useState } from "react";
+import {
+  IconDots,
+  IconFolder,
+  IconShare3,
+  IconTrash,
+} from "@tabler/icons-react";
+import AddResponderDialog from "@/components/AddResponderDialog";
 
 import {
   DropdownMenu,
@@ -8,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,12 +24,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-export function NavDocuments({
-  items
-}) {
-  const { isMobile } = useSidebar()
+export function NavDocuments({ items }) {
+  const { isMobile } = useSidebar();
+  const [showAddResponderDialog, setShowAddResponderDialog] = useState(false);
+
+  const handleAddClick = (itemName) => {
+    if (itemName === "Responders") {
+      setShowAddResponderDialog(true);
+    }
+    // Handle other items as needed
+  };
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -38,7 +51,10 @@ export function NavDocuments({
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover className="data-[state=open]:bg-accent rounded-sm">
+                <SidebarMenuAction
+                  showOnHover
+                  className="data-[state=open]:bg-accent rounded-sm"
+                >
                   <IconDots />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
@@ -46,8 +62,9 @@ export function NavDocuments({
               <DropdownMenuContent
                 className="w-24 rounded-lg"
                 side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}>
-                <DropdownMenuItem>
+                align={isMobile ? "end" : "start"}
+              >
+                <DropdownMenuItem onClick={() => handleAddClick(item.name)}>
                   <IconFolder />
                   <span>Add</span>
                 </DropdownMenuItem>
@@ -71,6 +88,12 @@ export function NavDocuments({
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
+
+      {/* Add Responder Dialog */}
+      <AddResponderDialog
+        open={showAddResponderDialog}
+        onOpenChange={setShowAddResponderDialog}
+      />
     </SidebarGroup>
   );
 }

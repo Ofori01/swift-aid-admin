@@ -29,6 +29,34 @@ export const fetchResponders = createAsyncThunk(
   }
 );
 
+// Async thunk to create a new responder
+export const createResponder = createAsyncThunk(
+  "responders/createResponder",
+  async (responderData, { getState, rejectWithValue }) => {
+    try {
+      const { auth } = getState();
+      const response = await fetch(`${API_BASE_URL}/admin/responders`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(responderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create responder");
+      }
+
+      const data = await response.json();
+      return data.responder;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const respondersSlice = createSlice({
   name: "responders",
   initialState: {
@@ -36,6 +64,8 @@ const respondersSlice = createSlice({
     loading: false,
     error: null,
     selectedResponder: null,
+    creating: false,
+    createError: null,
   },
   reducers: {
     setSelectedResponder: (state, action) => {
@@ -43,6 +73,9 @@ const respondersSlice = createSlice({
     },
     clearSelectedResponder: (state) => {
       state.selectedResponder = null;
+    },
+    clearCreateError: (state) => {
+      state.createError = null;
     },
   },
   extraReducers: (builder) => {
@@ -58,10 +91,25 @@ const respondersSlice = createSlice({
       .addCase(fetchResponders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(createResponder.pending, (state) => {
+        state.creating = true;
+        state.createError = null;
+      })
+      .addCase(createResponder.fulfilled, (state, action) => {
+        state.creating = false;
+        state.data.push(action.payload);
+      })
+      .addCase(createResponder.rejected, (state, action) => {
+        state.creating = false;
+        state.createError = action.payload;
       });
   },
 });
 
-export const { setSelectedResponder, clearSelectedResponder } =
-  respondersSlice.actions;
+export const {
+  setSelectedResponder,
+  clearSelectedResponder,
+  clearCreateError,
+} = respondersSlice.actions;
 export default respondersSlice.reducer;

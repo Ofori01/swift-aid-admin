@@ -14,6 +14,7 @@ import {
   XCircle,
   Truck,
   Activity,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const Emergency = () => {
@@ -23,61 +24,64 @@ const Emergency = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock emergency detail data - replace with actual API call
+    // TODO: Replace with actual API call to fetch emergency details
+    // For now, using mock data that matches the API response structure
     const mockEmergency = {
-      id: emergency_id,
-      type: "Fire Emergency",
-      status: "active",
-      priority: "critical",
-      location: "University of Ghana, East Legon Campus",
-      coordinates: [-0.1838044, 5.6486909],
+      _id: emergency_id,
+      emergency_type: "Fire",
+      status: "Pending",
+      severity: "Critical",
       description:
         "Large fire reported in the chemistry laboratory building. Multiple casualties reported. Immediate fire suppression and medical assistance required.",
-      reportedAt: "2024-08-14T12:24:41.198Z",
-      reportedBy: "Dr. Emmanuel Asante",
-      reporterPhone: "+233-24-123-4567",
-      reporterRole: "Laboratory Supervisor",
-      severity: "Critical",
-      assignedTeam: "Fire Response Team Alpha",
-      teamMembers: [
+      emergency_location: {
+        type: "Point",
+        coordinates: [-0.1838044, 5.6486909],
+      },
+      user_id: {
+        name: "Dr. Emmanuel Asante",
+        phone_number: "+233-24-123-4567",
+        email: "dr.asante@ug.edu.gh",
+      },
+      image: "68d47ce80168cf6418c6147f", // This is the image ID from the API
+      createdAt: "2024-08-14T12:24:41.198Z",
+      updatedAt: "2024-08-14T12:32:15.342Z",
+      ai_recommendations: {
+        priority_score: 98,
+        severity_level: "Critical",
+        estimated_response_time: 8,
+        recommended_resources: {
+          ambulances: 2,
+          fire_trucks: 3,
+          police_units: 2,
+        },
+        justification:
+          "Large fire with multiple casualties requires immediate comprehensive response.",
+      },
+      selected_responders: {
+        fire_trucks: [
+          { responder_id: "truck001", travelTime: 5 },
+          { responder_id: "truck002", travelTime: 8 },
+        ],
+        ambulances: [
+          { responder_id: "amb001", travelTime: 6 },
+          { responder_id: "amb002", travelTime: 10 },
+        ],
+        police_units: [{ responder_id: "police001", travelTime: 4 }],
+      },
+      agency_responders: [
         {
           name: "Captain James Mensah",
-          role: "Team Leader",
           phone: "+233-20-111-2222",
+          badgeNumber: "FD001",
+          status: "en_route",
         },
         {
           name: "Officer Sarah Owusu",
-          role: "Fire Suppression",
           phone: "+233-24-333-4444",
-        },
-        {
-          name: "Medic John Appiah",
-          role: "Medical Support",
-          phone: "+233-26-555-6666",
+          badgeNumber: "FD002",
+          status: "en_route",
         },
       ],
-      estimatedResponseTime: 8,
-      actualResponseTime: null,
-      vehiclesDispatched: [
-        { type: "Fire Engine", unit: "FE-001", status: "En Route" },
-        { type: "Ambulance", unit: "AMB-003", status: "En Route" },
-        { type: "Support Vehicle", unit: "SV-012", status: "Standby" },
-      ],
-      timeline: [
-        { time: "12:24", action: "Emergency reported", status: "reported" },
-        { time: "12:25", action: "Team dispatched", status: "dispatched" },
-        { time: "12:27", action: "Units en route", status: "responding" },
-        { time: "12:32", action: "Arrived on scene", status: "on-scene" },
-      ],
-      aiRecommendations: {
-        priorityScore: 98,
-        recommendations: [
-          "Immediate evacuation of surrounding buildings",
-          "Request additional ambulance units",
-          "Coordinate with hospital for burn unit availability",
-          "Set up incident command center",
-        ],
-      },
     };
 
     // Simulate API loading
@@ -88,10 +92,12 @@ const Emergency = () => {
   }, [emergency_id]);
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "active":
+      case "in_progress":
         return <AlertTriangle className="h-5 w-5 text-red-500" />;
       case "resolved":
+      case "completed":
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "pending":
         return <Clock className="h-5 w-5 text-yellow-500" />;
@@ -100,8 +106,8 @@ const Emergency = () => {
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
+  const getPriorityColor = (severity) => {
+    switch (severity?.toLowerCase()) {
       case "critical":
         return "bg-red-100 text-red-800 border-red-200";
       case "high":
@@ -121,6 +127,10 @@ const Emergency = () => {
       date: date.toLocaleDateString(),
       time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
+  };
+
+  const getImageUrl = (imageId) => {
+    return `https://swift-aid-backend.onrender.com/emergency/image/${imageId}`;
   };
 
   if (loading) {
@@ -170,7 +180,7 @@ const Emergency = () => {
     );
   }
 
-  const { date, time } = formatDateTime(emergency.reportedAt);
+  const { date, time } = formatDateTime(emergency.createdAt);
 
   return (
     <div className="p-6 space-y-6">
@@ -187,13 +197,13 @@ const Emergency = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Emergency Details</h1>
-            <p className="text-muted-foreground">ID: {emergency.id}</p>
+            <p className="text-muted-foreground">ID: {emergency._id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {getStatusIcon(emergency.status)}
-          <Badge className={getPriorityColor(emergency.priority)}>
-            {emergency.priority.toUpperCase()}
+          <Badge className={getPriorityColor(emergency.severity)}>
+            {emergency.severity?.toUpperCase()}
           </Badge>
         </div>
       </div>
@@ -209,7 +219,9 @@ const Emergency = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="font-semibold text-lg mb-2">{emergency.type}</h3>
+              <h3 className="font-semibold text-lg mb-2">
+                {emergency.emergency_type} Emergency
+              </h3>
               <p className="text-muted-foreground">{emergency.description}</p>
             </div>
 
@@ -219,7 +231,9 @@ const Emergency = () => {
                 <div>
                   <span className="text-sm font-medium">Location</span>
                   <p className="text-sm text-muted-foreground">
-                    {emergency.location}
+                    {emergency.emergency_location?.coordinates
+                      ? `${emergency.emergency_location.coordinates[1]}, ${emergency.emergency_location.coordinates[0]}`
+                      : "Location not available"}
                   </p>
                 </div>
               </div>
@@ -237,10 +251,10 @@ const Emergency = () => {
                 <div>
                   <span className="text-sm font-medium">Reported By</span>
                   <p className="text-sm text-muted-foreground">
-                    {emergency.reportedBy}
+                    {emergency.user_id?.name || "Unknown"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {emergency.reporterRole}
+                    {emergency.user_id?.email || ""}
                   </p>
                 </div>
               </div>
@@ -249,13 +263,41 @@ const Emergency = () => {
                 <div>
                   <span className="text-sm font-medium">Contact</span>
                   <p className="text-sm text-muted-foreground">
-                    {emergency.reporterPhone}
+                    {emergency.user_id?.phone_number || "Not available"}
                   </p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Emergency Image */}
+        {emergency.image && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Emergency Image
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-square w-full relative overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={getImageUrl(emergency.image)}
+                  alt="Emergency scene"
+                  className="w-full h-full object-cover transition-transform hover:scale-105"
+                  onError={(e) => {
+                    e.target.src =
+                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' fill='%236b7280' text-anchor='middle' dy='.3em'%3EImage not available%3C/text%3E%3C/svg%3E";
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Emergency scene documentation
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Response Team */}
         <Card>
@@ -267,52 +309,108 @@ const Emergency = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="pb-2 border-b">
-                <p className="font-medium text-sm">{emergency.assignedTeam}</p>
-              </div>
-              {emergency.teamMembers.map((member, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-medium">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {member.role}
-                    </p>
+              {emergency.agency_responders &&
+              emergency.agency_responders.length > 0 ? (
+                emergency.agency_responders.map((member, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-2 bg-muted/50 rounded"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Badge: {member.badgeNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        Status: {member.status?.replace("_", " ")}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Phone className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <Phone className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No responders assigned yet
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Vehicles Dispatched */}
+        {/* Selected Responders */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Truck className="h-5 w-5" />
-              Vehicles Dispatched
+              Selected Responders
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {emergency.vehiclesDispatched.map((vehicle, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-2 bg-muted/50 rounded"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{vehicle.type}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Unit: {vehicle.unit}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {vehicle.status}
-                  </Badge>
-                </div>
-              ))}
+              {emergency.selected_responders ? (
+                <>
+                  {emergency.selected_responders.fire_trucks?.map(
+                    (truck, index) => (
+                      <div
+                        key={`fire-${index}`}
+                        className="flex justify-between items-center p-2 bg-muted/50 rounded"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">Fire Truck</p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {truck.responder_id}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {truck.travelTime}min ETA
+                        </Badge>
+                      </div>
+                    )
+                  )}
+                  {emergency.selected_responders.ambulances?.map(
+                    (ambulance, index) => (
+                      <div
+                        key={`ambulance-${index}`}
+                        className="flex justify-between items-center p-2 bg-muted/50 rounded"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">Ambulance</p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {ambulance.responder_id}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {ambulance.travelTime}min ETA
+                        </Badge>
+                      </div>
+                    )
+                  )}
+                  {emergency.selected_responders.police_units?.map(
+                    (police, index) => (
+                      <div
+                        key={`police-${index}`}
+                        className="flex justify-between items-center p-2 bg-muted/50 rounded"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">Police Unit</p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {police.responder_id}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {police.travelTime}min ETA
+                        </Badge>
+                      </div>
+                    )
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No responders selected yet
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -332,53 +430,143 @@ const Emergency = () => {
                   Priority Score
                 </span>
                 <Badge variant="destructive">
-                  {emergency.aiRecommendations.priorityScore}/100
+                  {emergency.ai_recommendations?.priority_score || 0}/100
                 </Badge>
               </div>
-              <div>
-                <h4 className="text-sm font-medium mb-2">Recommendations</h4>
-                <ul className="space-y-1">
-                  {emergency.aiRecommendations.recommendations.map(
-                    (rec, index) => (
-                      <li
-                        key={index}
-                        className="text-xs text-muted-foreground flex items-start gap-1"
-                      >
-                        <span className="w-1 h-1 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                        {rec}
-                      </li>
-                    )
-                  )}
-                </ul>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 bg-muted/50 rounded">
+                  <p className="text-xs text-muted-foreground">Ambulances</p>
+                  <p className="font-medium">
+                    {emergency.ai_recommendations?.recommended_resources
+                      ?.ambulances || 0}
+                  </p>
+                </div>
+                <div className="p-2 bg-muted/50 rounded">
+                  <p className="text-xs text-muted-foreground">Fire Trucks</p>
+                  <p className="font-medium">
+                    {emergency.ai_recommendations?.recommended_resources
+                      ?.fire_trucks || 0}
+                  </p>
+                </div>
+                <div className="p-2 bg-muted/50 rounded">
+                  <p className="text-xs text-muted-foreground">Police Units</p>
+                  <p className="font-medium">
+                    {emergency.ai_recommendations?.recommended_resources
+                      ?.police_units || 0}
+                  </p>
+                </div>
+              </div>
+
+              {emergency.ai_recommendations?.justification && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">AI Analysis</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {emergency.ai_recommendations.justification}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">Severity Level:</span>
+                <Badge variant="outline">
+                  {emergency.ai_recommendations?.severity_level ||
+                    emergency.severity}
+                </Badge>
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">
+                  Est. Response Time:
+                </span>
+                <span className="font-medium">
+                  {emergency.ai_recommendations?.estimated_response_time ||
+                    "N/A"}
+                  min
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Timeline */}
+        {/* Emergency Status Timeline */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Response Timeline
+              Emergency Timeline
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {emergency.timeline.map((event, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 bg-muted/50 rounded"
-                >
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">
+                    {new Date(emergency.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Emergency Reported
+                  </p>
+                </div>
+              </div>
+
+              {emergency.ai_recommendations?.generated_at && (
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">{event.time}</p>
+                    <p className="text-sm font-medium">
+                      {new Date(
+                        emergency.ai_recommendations.generated_at
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {event.action}
+                      AI Analysis Completed
                     </p>
                   </div>
                 </div>
-              ))}
+              )}
+
+              {emergency.updatedAt !== emergency.createdAt && (
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      {new Date(emergency.updatedAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Last Updated
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    emergency.status === "Completed"
+                      ? "bg-green-500"
+                      : emergency.status === "Pending"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
+                  }`}
+                ></div>
+                <div>
+                  <p className="text-sm font-medium">Current Status</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {emergency.status}
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
