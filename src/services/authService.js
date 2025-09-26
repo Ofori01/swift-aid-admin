@@ -1,7 +1,7 @@
 // Authentication service for Swift Aid Backend API
 const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:5173/api" // Use proxy in development
-  : "https://swift-aid-backend.onrender.com"; // Direct URL in production
+  : import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com"; // Use environment variable in production
 
 class AuthService {
   async login(credentials) {

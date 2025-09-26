@@ -125,7 +125,8 @@ const Emergencies = () => {
   };
 
   const getImageUrl = (imageId) => {
-    return `https://swift-aid-backend.onrender.com/emergency/image/${imageId}`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+    return `${baseUrl}/emergency/image/${imageId}`;
   };
 
   const openDetailsModal = (emergency) => {
