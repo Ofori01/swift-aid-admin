@@ -130,7 +130,9 @@ const Emergency = () => {
   };
 
   const getImageUrl = (imageId) => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+    const baseUrl =
+      import.meta.env.VITE_API_BASE_URL ||
+      "https://swift-aid-backend.onrender.com";
     return `${baseUrl}/emergency/image/${imageId}`;
   };
 

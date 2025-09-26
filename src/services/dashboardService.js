@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:5173/api" // Use proxy in development
-  : import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com"; // Use environment variable in production
+  : import.meta.env.VITE_API_BASE_URL ||
+    "https://swift-aid-backend.onrender.com"; // Use environment variable in production
 
 export const dashboardService = {
   async getDashboardData() {

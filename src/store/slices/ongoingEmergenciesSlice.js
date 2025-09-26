@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const API_BASE_URL = import.meta.env.DEV
   ? "/api" // Use proxy in development
-  : import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+  : import.meta.env.VITE_API_BASE_URL ||
+    "https://swift-aid-backend.onrender.com";
 
 // Async thunk for fetching ongoing emergencies
 export const fetchOngoingEmergencies = createAsyncThunk(
