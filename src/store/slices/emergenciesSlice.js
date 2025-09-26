@@ -1,5 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+
+// In development, use proxy; in production, use direct API calls
+const getApiUrl = (endpoint) => {
+  if (import.meta.env.DEV) {
+    return `/api${endpoint}`;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
+
 // Async thunk for fetching emergencies
 export const fetchEmergencies = createAsyncThunk(
   "emergencies/fetchEmergencies",
@@ -15,9 +26,11 @@ export const fetchEmergencies = createAsyncThunk(
         }
       });
 
-      const url = `/api/admin/emergencies${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`;
+      const url = getApiUrl(
+        `/admin/emergencies${
+          queryParams.toString() ? `?${queryParams.toString()}` : ""
+        }`
+      );
 
       const response = await fetch(url, {
         method: "GET",

@@ -1,9 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_BASE_URL = import.meta.env.DEV
-  ? "/api" // Use proxy in development
-  : import.meta.env.VITE_API_BASE_URL ||
-    "https://swift-aid-backend.onrender.com";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+
+// In development, use proxy; in production, use direct API calls
+const getApiUrl = (endpoint) => {
+  if (import.meta.env.DEV) {
+    return `/api${endpoint}`;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
 
 // Async thunk to fetch responders
 export const fetchResponders = createAsyncThunk(
@@ -11,7 +17,7 @@ export const fetchResponders = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
-      const response = await fetch(`${API_BASE_URL}/admin/responders`, {
+      const response = await fetch(getApiUrl("/admin/responders"), {
         headers: {
           Authorization: `Bearer ${auth.token}`,
           "Content-Type": "application/json",
@@ -36,7 +42,7 @@ export const createResponder = createAsyncThunk(
   async (responderData, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
-      const response = await fetch(`${API_BASE_URL}/admin/responders`, {
+      const response = await fetch(getApiUrl("/admin/responders"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${auth.token}`,

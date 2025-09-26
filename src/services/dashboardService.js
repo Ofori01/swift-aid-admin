@@ -1,7 +1,13 @@
-const API_BASE_URL = import.meta.env.DEV
-  ? "http://localhost:5173/api" // Use proxy in development
-  : import.meta.env.VITE_API_BASE_URL ||
-    "https://swift-aid-backend.onrender.com"; // Use environment variable in production
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+
+// In development, use proxy; in production, use direct API calls
+const getApiUrl = (endpoint) => {
+  if (import.meta.env.DEV) {
+    return `/api${endpoint}`;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
 
 export const dashboardService = {
   async getDashboardData() {
@@ -12,7 +18,7 @@ export const dashboardService = {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+      const response = await fetch(getApiUrl("/admin/dashboard"), {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

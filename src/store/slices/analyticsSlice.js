@@ -1,12 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://swift-aid-backend.onrender.com";
+
+// In development, use proxy; in production, use direct API calls
+const getApiUrl = (endpoint) => {
+  if (import.meta.env.DEV) {
+    return `/api${endpoint}`;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
+
 // Async thunks for API calls
 export const fetchAnalytics = createAsyncThunk(
   "analytics/fetchAnalytics",
   async (_, { rejectWithValue, getState }) => {
     try {
       const { auth } = getState();
-      const response = await fetch("/api/admin/analytics", {
+      const response = await fetch(getApiUrl("/admin/analytics"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -34,13 +45,16 @@ export const fetchResponseTimes = createAsyncThunk(
   async (_, { rejectWithValue, getState }) => {
     try {
       const { auth } = getState();
-      const response = await fetch("/api/admin/analytics/response-times", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
-        },
-      });
+      const response = await fetch(
+        getApiUrl("/admin/analytics/response-times"),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -63,7 +77,7 @@ export const fetchResponderUtilization = createAsyncThunk(
     try {
       const { auth } = getState();
       const response = await fetch(
-        "/api/admin/analytics/responder-utilization",
+        getApiUrl("/admin/analytics/responder-utilization"),
         {
           method: "GET",
           headers: {
